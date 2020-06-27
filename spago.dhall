@@ -13,6 +13,8 @@ You can edit this file as you like.
   , "node-url"
   , "nullable"
   , "psci-support"
+  , "strings"
+  , "uri"
   , "wai"
   ]
 , packages = ./packages.dhall
