@@ -7,7 +7,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class.Console (log)
-import Network.Node.Warp as Warp
+import Network.Node.Warp.Request as Warp
 import Node.Encoding (Encoding(..))
 import Node.HTTP as HTTP
 import Node.Stream (end, onReadable, readString, writeString)
