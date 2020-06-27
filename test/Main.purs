@@ -4,32 +4,31 @@ module Test.Main where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Class.Console (log)
-import Network.Node.Warp.Request as Warp
-import Node.Encoding (Encoding(..))
-import Node.HTTP as HTTP
-import Node.Stream (end, onReadable, readString, writeString)
+import Network.HTTP.Types as H
+import Network.Node.Warp as Warp
+import Network.Wai (Request(..))
+import Network.Wai as Wai
 
 main :: Effect Unit
-main = do
-    server <- HTTP.createServer handler
-    HTTP.listen server defaultOption (log "linsten")
+main = Warp.run 8080 routingApp
 
-defaultOption :: HTTP.ListenOptions
-defaultOption = {backlog : Nothing, hostname: "localhost", port : 8080}
+routingApp :: Wai.Application
+routingApp (Request req) =
+  case req.pathInfo of
+    [""] -> rootApp (Request req)
+    ["hello"] -> helloApp (Request req)
+    _ -> notFoundApp (Request req)
 
-handler :: HTTP.Request -> HTTP.Response -> Effect Unit
-handler req res = do
-    let reqStream = HTTP.requestAsStream req
-    onReadable reqStream do
-      body <- readString reqStream Nothing UTF8
-      log $ show $ body
-    -- log $ show $ Warp.toUrl req
-    log $ show $ Warp.toQueryString req
-    HTTP.setStatusCode res 200
-    HTTP.setHeader res "Content-Type" "text/html; charset=utf8"
-    let stream = HTTP.responseAsStream res
-    _ <- writeString stream UTF8 "hogeee" (pure unit)
-    end stream (pure unit)
+rootApp :: Wai.Application
+rootApp req respond = 
+  respond $ Wai.responseString H.ok200 [Tuple H.hContentType "text/plain; charset=UTF8"] "Hello world!!"
+
+helloApp :: Wai.Application
+helloApp req respond =
+  respond $ Wai.responseString H.ok200 [Tuple H.hContentType "text/plain; charset=UTF8"] "Hello!!"
+
+notFoundApp :: Wai.Application
+notFoundApp req respond =
+  respond $ Wai.responseString H.notFound404 [Tuple H.hContentType "text/plain; charset=UTF8"] "NOT FOUND"
