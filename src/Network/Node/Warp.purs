@@ -1,4 +1,4 @@
-module Network.Node.Warp where
+module Network.Node.Warp (run, Port) where
 
 import Prelude
 
@@ -12,15 +12,15 @@ import Node.HTTP as HTTP
 
 type Port = Int
 
+run :: Port -> Wai.Application -> Effect Unit
+run port app = do
+    server <- HTTP.createServer (\req res -> launchAff_ $ implementation app req res)
+    HTTP.listen server defaultListenOptions { port = port } (pure unit)
+
 implementation :: Wai.Application -> HTTP.Request -> HTTP.Response -> Aff Unit
 implementation app req responseWriter = do
     _ <- app (abstraction req) (respond responseWriter)
     pure unit
 
-run :: Port -> Wai.Application -> Effect Unit
-run port app = do
-    server <- HTTP.createServer (\req res -> launchAff_ $ implementation app req res)
-    HTTP.listen server defaultOption { port = port } (pure unit)
-
-defaultOption :: HTTP.ListenOptions
-defaultOption = {backlog: Nothing, hostname: "localhost", port: 8080}
+defaultListenOptions :: HTTP.ListenOptions
+defaultListenOptions = {backlog: Nothing, hostname: "localhost", port: 8080}

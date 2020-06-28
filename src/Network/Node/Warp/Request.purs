@@ -1,4 +1,4 @@
-module Network.Node.Warp.Request where
+module Network.Node.Warp.Request (abstraction) where
 
 import Prelude
 import Prim
@@ -12,12 +12,26 @@ import Data.String.Pattern (Pattern(..))
 import Data.Tuple (Tuple(..))
 import Foreign.Object (toArrayWithKey)
 import Network.HTTP.Types as H
+import Network.Wai as Wai
 import Node.HTTP as HTTP
 import Node.Stream (Readable)
 import Node.URL (URL, parse)
 import URI.Extra.QueryPairs as QE
 import URI.Query as Q
-import Network.Wai as Wai
+
+abstraction :: HTTP.Request -> Wai.Request
+abstraction req = Wai.Request {
+     method: toMethod req
+  ,  httpVersion: toHttpVersion req
+  ,  rawPathInfo: toRawPathInfo req
+  ,  rawQueryString: toRawQueryString req
+  ,  requestHeaders: toRequestHeaders req
+  ,  pathInfo: toPathInfo req
+  ,  queryString: toQueryString req
+  ,  body: toBody req
+  }
+
+--- Private
 
 toMethod :: HTTP.Request -> H.Method
 toMethod req = case H.parseMethod $ HTTP.requestMethod req of
@@ -58,7 +72,7 @@ toPathInfo =
         >>> fromMaybe []
 
 -- /hoge1/hoge2?query1=value1&query2=value2
--- > [(Tuple "query1" (Just "value1")),(Tuple "query2" (Just "value2"))]
+-- >> [(Tuple "query1" (Just "value1")),(Tuple "query2" (Just "value2"))]
 toQueryString :: HTTP.Request -> H.Query
 toQueryString =
     toUrl
@@ -73,20 +87,6 @@ toQueryString =
 
 toBody :: HTTP.Request -> Readable ()
 toBody = HTTP.requestAsStream
-
-abstraction :: HTTP.Request -> Wai.Request
-abstraction req = Wai.Request {
-     method: toMethod req
-  ,  httpVersion: toHttpVersion req
-  ,  rawPathInfo: toRawPathInfo req
-  ,  rawQueryString: toRawQueryString req
-  ,  requestHeaders: toRequestHeaders req
-  ,  pathInfo: toPathInfo req
-  ,  queryString: toQueryString req
-  ,  body: toBody req
-  }
-
--- Private
 
 toUrl :: HTTP.Request -> URL
 toUrl req = parse $ HTTP.requestURL req
